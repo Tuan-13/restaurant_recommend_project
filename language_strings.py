@@ -1,6 +1,6 @@
 # language_strings.py
 
-from google_trans_new import Translator
+from google_trans_new import google_translator
 import time # Thêm thư viện time để chờ giữa các lần dịch (giảm nguy cơ bị chặn)
 
 # --- THIẾT LẬP CƠ BẢN ---
@@ -52,7 +52,7 @@ def create_full_strings_dict():
     full_strings = {DEFAULT_LANG: VIETNAMESE_STRINGS}
     
     try:
-        translator = Translator()
+        translator = google_translator()
     except Exception as e:
         print(f"LỖI: Không thể khởi tạo Translator. Ứng dụng sẽ chỉ dùng Tiếng Việt. Chi tiết: {e}")
         return full_strings # Trả về chỉ Tiếng Việt nếu lỗi
