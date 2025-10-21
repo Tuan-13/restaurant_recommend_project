@@ -6,7 +6,7 @@ import streamlit as st
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from geopy.distance import geodesic
-import os # Thêm thư viện os để kiểm tra đường dẫn
+import os 
 
 # Tên file dữ liệu đã xử lý
 PROCESSED_DATA_FILE = 'restaurants_processed_data.csv'
@@ -18,18 +18,14 @@ DEFAULT_RADIUS_KM = 3.5
 def load_and_prepare_data():
     """Đọc dữ liệu và tiền xử lý các cột cần thiết."""
     
-    # Gỡ bỏ đường dẫn tuyệt đối (nếu có) và chỉ dùng tên file
-    current_dir = os.path.dirname(__file__) if os.path.dirname(__file__) else '.'
-    file_path = os.path.join(current_dir, PROCESSED_DATA_FILE)
-
+    # Ưu tiên tìm kiếm từ thư mục gốc (Streamlit Cloud)
+    file_path = PROCESSED_DATA_FILE
+    
     try:
         if not os.path.exists(file_path):
-             # Log đường dẫn đang tìm kiếm để dễ debug trên Cloud Log
-            print(f"LỖI TẢI DỮ LIỆU: File không tồn tại tại {file_path}")
-            # Thử lại từ thư mục gốc (áp dụng cho Streamlit Cloud)
-            file_path = PROCESSED_DATA_FILE 
-            print(f"Thử tải lại từ thư mục gốc: {file_path}")
-            
+             print(f"LỖI TẢI DỮ LIỆU: File không tồn tại tại {file_path}")
+             return pd.DataFrame()
+             
         df = pd.read_csv(file_path) 
         print(f"TẢI DỮ LIỆU THÀNH CÔNG. Số hàng: {len(df)}")
         
@@ -37,10 +33,17 @@ def load_and_prepare_data():
         print(f"LỖI TẢI DỮ LIỆU CUỐI: Không thể tìm thấy file. Lỗi: {e}")
         return pd.DataFrame() 
 
+    # Kiểm tra cột bắt buộc (Giả định tên cột là 'Latitude' và 'Longitude')
+    required_cols = ['Latitude', 'Longitude', 'Final_NLP_Rating']
+    for col in required_cols:
+        if col not in df.columns:
+            print(f"LỖI: File CSV thiếu cột bắt buộc: {col}")
+            return pd.DataFrame()
+
     # Tiếp tục tiền xử lý
-    df['Cuisine'] = df['Cuisine'].str.lower().str.strip().fillna('')
+    df['Cuisine'] = df['Cuisine'].astype(str).str.lower().str.strip().fillna('')
     df['combined_features'] = df['Name'].fillna('') + ' ' + df['Cuisine']
-    df['Price_Level_OSM'] = df['Price_Level_OSM'].fillna(0).astype(int)
+    df['Price_Level_OSM'] = df.get('Price_Level_OSM', 0).fillna(0).astype(int)
 
     return df
 
@@ -55,10 +58,16 @@ def filter_by_location(df, center_lat, center_lon, radius_km=DEFAULT_RADIUS_KM):
     
     def get_distance(row):
         try:
-            restaurant_location = (row['Latitude'], row['Longitude'])
+            # SỬ DỤNG TÊN CỘT Latitude VÀ Longitude
+            restaurant_location = (row['Latitude'], row['Longitude']) 
+            
+            # Xử lý trường hợp tọa độ không hợp lệ (NaN, 0)
+            if np.isnan(restaurant_location).any() or (restaurant_location == (0, 0)).all():
+                 return 9999
+                 
             return geodesic(center_location, restaurant_location).km
         except:
-            return 9999
+            return 9999 # Trả về khoảng cách lớn nếu lỗi tính toán
             
     df['Distance_km'] = df.apply(get_distance, axis=1)
     df_filtered = df[df['Distance_km'] <= radius_km].copy()
@@ -73,14 +82,11 @@ def find_best_restaurants(user_input_cuisine, user_budget_level, user_lat, user_
     df = load_and_prepare_data()
     
     if df.empty:
-        # Quan trọng: Nếu dữ liệu rỗng, báo lỗi để Streamlit hiển thị 'Không tìm thấy'
-        print("Dữ liệu rỗng, trả về DataFrame rỗng.")
         return pd.DataFrame()
 
     # 3.1. Lọc Địa lý
     df_filtered = filter_by_location(df, user_lat, user_lon)
     if df_filtered.empty:
-        print("Không tìm thấy nhà hàng trong bán kính 3.5km.")
         return pd.DataFrame() 
 
     # 3.2. Tính toán Tương đồng Cosine
@@ -105,7 +111,6 @@ def find_best_restaurants(user_input_cuisine, user_budget_level, user_lat, user_
         ]
     
     if df_filtered.empty:
-        print("Không tìm thấy nhà hàng phù hợp sau khi lọc ngân sách.")
         return pd.DataFrame()
 
     # 3.4. TÍNH ĐIỂM XẾP HẠNG CUỐI CÙNG

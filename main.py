@@ -16,14 +16,12 @@ def get_language_settings():
     
     available_lang_codes = list(STRINGS.keys())
     
-    # Lưu trạng thái ngôn ngữ vào session_state để duy trì sau mỗi lần render
     if 'lang_code' not in st.session_state:
         st.session_state.lang_code = DEFAULT_LANG
         
-    # Chọn ngôn ngữ (Sidebar)
-    st.sidebar.markdown(f"**{STRINGS[DEFAULT_LANG]['lang_select']}**") # Tên tiếng Việt
+    st.sidebar.markdown(f"**{STRINGS[DEFAULT_LANG]['lang_select']}**") 
     new_lang_code = st.sidebar.selectbox(
-        "", # Bỏ trống nhãn vì đã dùng markdown
+        "", 
         options=available_lang_codes, 
         format_func=lambda x: lang_names.get(x, x),
         index=available_lang_codes.index(st.session_state.lang_code),
@@ -83,7 +81,7 @@ def main():
         except ValueError:
             st.error(lang['location_format_error']); return
 
-        with st.spinner('Đang tìm kiếm và phân tích...'):
+        with st.spinner(f"Đang tìm kiếm và phân tích..."):
             
             # 2.2. GỌI MÔ HÌNH GỢI Ý
             results_df = find_best_restaurants(
