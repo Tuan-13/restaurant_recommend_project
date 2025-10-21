@@ -1,6 +1,6 @@
 # language_strings.py
 
-from googletrans import Translator
+from google_translator import Translator
 import time # Thêm thư viện time để chờ giữa các lần dịch (giảm nguy cơ bị chặn)
 
 # --- THIẾT LẬP CƠ BẢN ---
