@@ -15,7 +15,7 @@ TARGET_LANGS = {
 }
 
 # ID PHIÊN BẢN CHUỖI: THAY ĐỔI KHI CÓ THÊM CHUỖI MỚI VÀ CẦN DỊCH LẠI
-STRING_VERSION = "v1.2" 
+STRING_VERSION = "v1.3" 
 TRANSLATION_CACHE_FILE = f'translated_strings_cache_{STRING_VERSION}.json'
 
 # --- KHỐI TIẾNG VIỆT (NGÔN NGỮ GỐC) ---
